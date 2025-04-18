@@ -59,6 +59,9 @@ DEEPSEEK_API_KEY = 你的DeepSeek API密钥
 DEEPSEEK_API_BASE = https://api.deepseek.com/v1
 ```
 
+4. 安装 mermaid 插件，可 渲染 [mermaid图](https://mermaid.nodejs.cn/intro/)。
+- VSCode 用 `Markdown Preview Mermaid Support`插件。
+
 ### 运行示例
 
 打开任意Jupyter笔记本，按顺序运行单元格即可。建议按照编号顺序学习，由浅入深。
