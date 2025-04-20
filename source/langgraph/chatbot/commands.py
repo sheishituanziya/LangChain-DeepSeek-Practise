@@ -23,4 +23,5 @@ class ResumeCommand(Command):
     def _is_valid_command(self, command):
         """验证恢复命令是否合法"""
         # 可以添加复杂的验证逻辑
-        return command.strip() == "admin123"
+        # return command.strip() == "admin123"
+        return True
