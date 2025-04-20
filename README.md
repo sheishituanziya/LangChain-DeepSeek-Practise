@@ -37,6 +37,8 @@
    - 向量存储和检索
    - 全流程RAG系统构建
 
+7. **extra**
+   - LangGraph demo：[chatbot_case.md](source/langgraph/chatbot_case.md)
 ## 使用说明
 
 ### 环境配置
