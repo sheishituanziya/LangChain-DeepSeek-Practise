@@ -1,8 +1,9 @@
 # File: chatbot.py
 import threading
 from commands import ResumeCommand
-from config.constants import LockConstants
+from constants.constants import LockConstants
 from utils.threading_utils import thread_safe
+from utils.task_executor import TaskQueue
 
 class ChatbotState:
     # 定义状态常量
@@ -60,15 +61,15 @@ class ChatbotState:
             listener.on_state_change(key, value)
 
     @thread_safe(LOCK_ATTR)
-    def add_pending_input(self, user_id: str, text: str):
+    def add_pending_input(self, input_tuple):
         """保存待处理请求
-        :param user_id: 用户的 ID
-        :param text: 用户输入的文本
+        :param input_tuple: 元组
         """
-        self._state[self.PENDING_INPUTS].append((user_id, text))
+        with self._lock:
+            self._state[self.PENDING_INPUTS].append(input_tuple)
 
     @thread_safe(LOCK_ATTR)
-    def take_pending_inputs(self) -> list:
+    def fetch_and_clear_pending(self) -> list:
         pending = self._state[self.PENDING_INPUTS].copy()
         self._state[self.PENDING_INPUTS].clear()
         return pending
@@ -77,6 +78,10 @@ class ChatbotState:
     @thread_safe(LOCK_ATTR)
     def has_pending(self) -> bool:
         return len(self._state[self.PENDING_INPUTS]) > 0
+    
+    @thread_safe(LOCK_ATTR)
+    def pending_size(self) -> int:
+        return len(self._state[self.PENDING_INPUTS])
 
 class Chatbot:
     # 定义常量
@@ -86,7 +91,7 @@ class Chatbot:
     该类是聊天机器人的核心，负责处理用户输入，根据机器人的状态
     决定是立即处理输入还是保存为待处理请求。
     """
-    def __init__(self, state: ChatbotState, processor, task_queue):
+    def __init__(self, state: ChatbotState, processor, task_queue:TaskQueue):
         """初始化聊天机器人
         :param state: 聊天机器人的状态管理对象
         :param processor: 输入处理器，用于处理用户输入
@@ -129,7 +134,7 @@ class Chatbot:
             self._resume_system(user_input[len(self.RESUME_PREFIX):], user_id)
         else:
             # 否则，将输入保存为待处理请求
-            self.state.add_pending_input(user_input, user_id)
+            self.state.add_pending_input((user_input, user_id))
 
     def _resume_system(self, command: str, operator: str):
         """恢复系统运行
@@ -142,12 +147,9 @@ class Chatbot:
         """处理待处理请求
         """
         # 获取并清空待处理列表（原子操作）
-        pending = self.state.take_pending_inputs()
+        pending = self.state.fetch_and_clear_pending()
         if pending:
-            print(f"[SYSTEM] Processing {len(pending)} pending requests")
-            for user_id, text in pending:
-                # 将原始输入重新提交处理流程
-                self.task_queue.put(self.handle_input, text, user_id)
+            self.task_queue.put_batch(self.handle_input, pending)
 
     def _process_input(self, text: str, user_id: str):
         """处理用户输入

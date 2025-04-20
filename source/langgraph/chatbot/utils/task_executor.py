@@ -15,6 +15,9 @@ class TaskQueue:
         self._observers = []
         # 用于控制队列是否关闭的事件标志
         self._shutdown_flag = threading.Event()
+        # 用于线程安全的批量操作
+        self._lock = threading.Lock()
+
 
     def add_observer(self, observer):
         """添加观察者
@@ -27,19 +30,28 @@ class TaskQueue:
         :param task: 要执行的任务函数
         :param args: 任务函数的位置参数
         :param kwargs: 任务函数的关键字参数
+        :raises RuntimeError: 如果任务队列已关闭
         """
-        # 如果队列没有关闭
-        if not self._shutdown_flag.is_set():
-            # 将任务及其参数封装成元组添加到队列中
-            self._queue.put((task, args, kwargs))
-            # 通知所有观察者有新任务添加
-            self._notify_observers()
+        if self._shutdown_flag.is_set():
+            raise RuntimeError("任务队列已关闭，无法添加新任务")
+        # 将任务及其参数封装成元组添加到队列中
+        self._queue.put((task, args, kwargs))
+        # 通知所有观察者有新任务添加
+        self._notify_observers()
 
-    def _notify_observers(self):
-        """通知所有观察者有新任务添加
+    def put_batch(self, task, tasks_list):
+        """向队列中批量添加任务
+        :param task: 要执行的任务函数
+        :param tasks_list: 一个列表，每个元素是一个任务的位置参数元组
+        :raises RuntimeError: 如果任务队列已关闭
         """
-        for observer in self._observers:
-            observer.on_task_added()
+        if self._shutdown_flag.is_set():
+            raise RuntimeError("任务队列已关闭，无法添加新任务")
+        # 确保线程安全：其他线程可能会修改队列的状态（例如关闭队列），导致部分任务被添加而其他任务被拒绝。
+        with self._lock:
+            for args in tasks_list:
+                self._queue.put((task, args, {}))
+        self._notify_observers() 
 
     def get(self):
         """从队列中获取任务
