@@ -1,22 +1,8 @@
 # File: chatbot.py
 import threading
-from functools import wraps
 from commands import ResumeCommand
-from constants import LockConstants
-
-def thread_safe(lock_attr: str):
-    """线程安全装饰器工厂"""
-    def decorator(func):
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            # 动态获取锁对象
-            lock = getattr(self, lock_attr)
-            # 自动加锁 
-            with lock:  
-                return func(self, *args, **kwargs)
-        return wrapper
-    return decorator
-
+from config.constants import LockConstants
+from utils.threading_utils import thread_safe
 
 class ChatbotState:
     # 定义状态常量

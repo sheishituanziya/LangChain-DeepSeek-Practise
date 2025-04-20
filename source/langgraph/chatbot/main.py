@@ -1,5 +1,5 @@
 # File: main.py
-from task_executor import TaskQueue, ThreadPoolManager
+from utils.task_executor import TaskQueue, ThreadPoolManager
 from chatbot import Chatbot, ChatbotState
 import time
 
