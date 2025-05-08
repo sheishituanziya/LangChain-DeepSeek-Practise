@@ -94,4 +94,8 @@ stateDiagram-v2
 - `command = Command(state_update={"name": name, "birthday": birthday})`，创建这个命令对象只是用于更新状态，像是对象创建后没有调用。
 - `.add_conditional_edges("chatbot", tools_condition)`， `tools_condition`只是调用一下，看不出对全局有什么影响。
 
-对于`command`，可以像 [chatbot.md](chatbot/chatbot.md)中实现的，通过方法来调用 `ResumeCommand(command, operator).execute(self.state)`，可以定位到行为。
+理解：
+
+- 对于`command`，可以像 [chatbot.md](chatbot/chatbot.md)中实现的，通过方法来调用 `ResumeCommand(command, operator).execute(self.state)`，可以定位到行为。
+    - 具体到例子中，state_update是属性，可以一眼看到更新的状态内容。使用状态的地方有很多，如工具节点、机器人聊天节点，都可能更新状态。而 Command(state_update) 只是声明，调用是不可见的，所以日志记录很重要、异常抛出很重要。可以订阅状态更新事件、加一个日志切面、或者定义一个类，在关键节点显示调用。
+- python 中，函数是一等公民，可以不用类包装，可以作为参数传递给其他函数，tools_condition 是一个函数，内置逻辑。
