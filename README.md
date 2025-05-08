@@ -37,6 +37,8 @@
    - 向量存储和检索
    - 全流程RAG系统构建
 
+7. **extra**
+   - LangGraph demo：[chatbot_case.md](source/langgraph/chatbot_case.md)
 ## 使用说明
 
 ### 环境配置
@@ -58,6 +60,9 @@ pip install -r requirements.txt
 DEEPSEEK_API_KEY = 你的DeepSeek API密钥
 DEEPSEEK_API_BASE = https://api.deepseek.com/v1
 ```
+
+4. 安装 mermaid 插件，可 渲染 [mermaid图](https://mermaid.nodejs.cn/intro/)。
+- VSCode 用 `Markdown Preview Mermaid Support`插件。
 
 ### 运行示例
 
